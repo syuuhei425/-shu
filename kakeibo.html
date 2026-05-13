@@ -6,7 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="家計簿">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#1D9E75">
+<link rel="manifest" href="manifest.json">
 <title>家計簿</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -31,10 +32,10 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); font-family:
 
 /* Layout */
 #app { display: flex; flex-direction: column; height: 100%; height: 100dvh; }
-#header { background: rgba(245,245,247,0.85); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); padding: 52px 20px 12px; border-bottom: 0.5px solid var(--border); flex-shrink: 0; }
+#header { background: rgba(245,245,247,0.85); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); padding: 52px 20px 12px; border-bottom: 0.5px solid var(--border); }
 #scroll-area { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(80px + var(--safe-bottom)); }
-#bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(245,245,247,0.92); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-top: 0.5px solid var(--border); display: flex; padding-bottom: var(--safe-bottom); z-index: 100; }
-.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0 8px; gap: 3px; cursor: pointer; border: none; background: none; color: var(--text3); font-size: 10px; font-family: 'Noto Sans JP', sans-serif; transition: color .15s; }
+#bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(245,245,247,0.92); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-top: 0.5px solid var(--border); display: flex; height: 50px; padding-bottom: env(safe-area-inset-bottom); }
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0 8px; gap: 3px; cursor: pointer; border: none; background: none; color: var(--text3); font-size: 10px; font-family: 'Noto Sans JP'; }
 .nav-item.active { color: var(--accent); }
 .nav-item svg { width: 22px; height: 22px; }
 
@@ -60,7 +61,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); font-family:
 
 /* Type toggle */
 .type-toggle { display: flex; gap: 6px; margin-bottom: 14px; background: #f0f0f5; border-radius: var(--radius-sm); padding: 3px; }
-.type-btn { flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; background: transparent; color: var(--text2); font-family: 'Noto Sans JP', sans-serif; transition: all .15s; }
+.type-btn { flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; background: transparent; color: var(--text2); font-family: 'Noto Sans JP', sans-serif; }
 .type-btn.sel-inc { background: var(--card); color: var(--inc); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .type-btn.sel-exp { background: var(--card); color: var(--exp); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
@@ -86,7 +87,7 @@ select:focus, input:focus { border-color: var(--accent); background: #fff; }
 .cal-month { font-size: 14px; font-weight: 500; }
 .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
 .cal-dow { text-align: center; font-size: 10px; color: var(--text2); padding: 4px 0; font-weight: 500; }
-.cal-day { text-align: center; font-size: 13px; padding: 7px 2px 5px; border-radius: 8px; cursor: pointer; color: var(--text); border: none; background: none; font-family: 'Noto Sans JP', sans-serif; line-height: 1.2; transition: background .12s; }
+.cal-day { text-align: center; font-size: 13px; padding: 7px 2px 5px; border-radius: 8px; cursor: pointer; color: var(--text); border: none; background: none; font-family: 'Noto Sans JP', sans-serif; }
 .cal-day:active { background: rgba(0,0,0,0.06); }
 .cal-day.today { color: var(--accent); font-weight: 700; }
 .cal-day.selected { background: var(--accent); color: #fff !important; font-weight: 600; }
@@ -96,7 +97,7 @@ select:focus, input:focus { border-color: var(--accent); background: #fff; }
 .date-badge { display: inline-flex; align-items: center; gap: 6px; background: #f0f0f5; border-radius: 8px; padding: 7px 11px; font-size: 13px; color: var(--text); margin-bottom: 14px; }
 
 /* Add button */
-.btn-add { width: 100%; padding: 14px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 16px; font-weight: 700; font-family: 'Noto Sans JP', sans-serif; cursor: pointer; margin-top: 16px; letter-spacing: 0.3px; transition: opacity .15s; }
+.btn-add { width: 100%; padding: 14px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 16px; font-weight: 700; font-family: 'Noto Sans JP', sans-serif; cursor: pointer; }
 .btn-add:active { opacity: 0.85; }
 
 /* Entry list */
@@ -289,9 +290,13 @@ select:focus, input:focus { border-color: var(--accent); background: #fff; }
 </div>
 
 <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+}
+
 const INCOME_ITEMS=['給与','副業収入','ボーナス','投資配当','フリマ・売却','仕送り','その他収入'];
-const EXPENSE_ITEMS=['食費','外食・カフェ','日用品','交通費','ガソリン代','住居費・家賃','水道代','電気代','ガス代','通信費・スマホ','インターネット','医療・薬代','衣類・ファッション','美容・理容','娯楽・趣味','サブスク','教育・書籍','保険料','税金・社会保険','交際費','旅行','ペット','その他支出'];
-const CAT_COLORS={'食費':'#D85A30','外食・カフェ':'#BA7517','日用品':'#639922','交通費':'#378ADD','ガソリン代':'#185FA5','住居費・家賃':'#1D9E75','水道代':'#5DCAA5','電気代':'#EF9F27','ガス代':'#D4537E','通信費・スマホ':'#7F77DD','インターネット':'#534AB7','医療・薬代':'#E24B4A','衣類・ファッション':'#F0997B','美容・理容':'#ED93B1','娯楽・趣味':'#BA7517','サブスク':'#AFA9EC','教育・書籍':'#85B7EB','保険料':'#888780','税金・社会保険':'#5F5E5A','交際費':'#993556','旅行':'#0F6E56','ペット':'#97C459','その他支出':'#B4B2A9','給与':'#1D9E75','副業収入':'#5DCAA5','ボーナス':'#EF9F27','投資配当':'#378ADD','フリマ・売却':'#BA7517','仕送り':'#9FE1CB','その他収入':'#88D1B5'};
+const EXPENSE_ITEMS=['食費','外食・カフェ','日用品','交通費','ガソリン代','住居費・家賃','水道代','電気代','ガス代','通信費・スマホ','インターネット','生命保険','医療・健康','衣服','靴','美容','理髪','教育','教材','習い事','本','映画・エンタメ','ゲーム','趣味','スポーツ','ペット','車・自転車','修理・メンテナンス','旅行','宿泊','食事・飲食','家具','インテリア','日用雑貨','その他支出'];
+const CAT_COLORS={'食費':'#D85A30','外食・カフェ':'#BA7517','日用品':'#639922','交通費':'#378ADD','ガソリン代':'#185FA5','住居費・家賃':'#1D9E75','水道代':'#5DCAA5','電気代':'#E8C547','ガス代':'#ED8642','通信費・スマホ':'#4A90E2','インターネット':'#357ABD','生命保険':'#9013FE','医療・健康':'#F5A623','衣服':'#D0021B','靴':'#C41E3A','美容':'#FF69B4','理髪':'#FF1493','教育':'#1E90FF','教材':'#4169E1','習い事':'#6495ED','本':'#8B4513','映画・エンタメ':'#DC143C','ゲーム':'#FF6347','趣味':'#FFD700','スポーツ':'#32CD32','ペット':'#FF8C00','車・自転車':'#696969','修理・メンテナンス':'#808080','旅行':'#20B2AA','宿泊':'#48D1CC','食事・飲食':'#FF6B6B','家具':'#D2B48C','インテリア':'#DEB887','日用雑貨':'#F4A460'};
 
 let currentType='income',fixedType='income';
 let viewDate=new Date(),calDate=new Date(),selectedDate=null;
