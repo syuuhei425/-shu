@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="家計簿">
+<meta name="theme-color" content="#1D9E75">
+<title>家計簿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{--bg:#f5f5f7;--card:#fff;--border:rgba(0,0,0,0.08);--text:#1d1d1f;--text2:#6e6e73;--text3:#aeaeb2;--inc:#1D9E75;--exp:#D85A30;--accent:#1D9E75;--r:16px;--rs:10px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--text)}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh}
+#hdr{background:rgba(245,245,247,0.85);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);padding:52px 20px 12px;border-bottom:0.5px solid var(--border)}
+#scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px calc(80px + env(safe-area-inset-bottom,0px))}
+#nav{position:fixed;bottom:0;left:0;right:0;background:rgba(245,245,247,0.92);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:0.5px solid var(--border);display:flex;height:50px;padding-bottom:env(safe-area-inset-bottom)}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;gap:3px;cursor:pointer;border:none;background:none;color:var(--text3);font-size:10px;font-family:'Noto Sans JP'}
+.ni.active{color:var(--accent)}
+.ni svg{width:22px;height:22px}
+.mnav{display:flex;align-items:center;justify-content:space-between}
+.mlbl{font-size:17px;font-weight:700}
+.nbtn{background:none;border:none;cursor:pointer;color:var(--text2);padding:6px;border-radius:50%}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.metric{background:var(--card);border-radius:var(--rs);padding:12px 10px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.ml{font-size:10px;color:var(--text2);margin-bottom:4px}
+.mv{font-size:16px;font-weight:700;letter-spacing:-0.3px}
+.inc{color:var(--inc)}.exp{color:var(--exp)}.pos{color:var(--inc)}.neg{color:var(--exp)}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.ct{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:14px}
+.ttog{display:flex;gap:6px;margin-bottom:14px;background:#f0f0f5;border-radius:var(--rs);padding:3px}
+.tbtn{flex:1;padding:8px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;background:transparent;color:var(--text2);font-family:'Noto Sans JP',sans-serif}
+.tbtn.si{background:var(--card);color:var(--inc);box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+.tbtn.se{background:var(--card);color:var(--exp);box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+.fl{font-size:11px;color:var(--text2);margin-bottom:5px;margin-top:12px}
+.fl:first-of-type{margin-top:0}
+select,input[type=text],input[type=number],input[type=password]{width:100%;padding:11px 12px;border-radius:var(--rs);border:1px solid var(--border);background:#f9f9fb;font-size:15px;font-family:'Noto Sans JP',sans-serif;color:var(--text);appearance:none;-webkit-appearance:none;outline:none}
+select:focus,input:focus{border-color:var(--accent);background:#fff}
+.sw{position:relative}.sw::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;font-size:12px}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.oi{margin-top:8px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cn{background:none;border:none;cursor:pointer;color:var(--text2);padding:4px 8px;font-size:18px;border-radius:6px}
+.cml{font-size:14px;font-weight:500}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.dow{text-align:center;font-size:10px;color:var(--text2);padding:4px 0;font-weight:500}
+.cd{text-align:center;font-size:13px;padding:7px 2px 5px;border-radius:8px;cursor:pointer;color:var(--text);border:none;background:none;font-family:'Noto Sans JP',sans-serif}
+.cd.tod{color:var(--accent);font-weight:700}
+.cd.sel{background:var(--accent);color:#fff!important;font-weight:600}
+.cd.om{color:var(--text3)}
+.cd .dot{width:4px;height:4px;border-radius:50%;background:var(--exp);margin:2px auto 0}
+.cd.sel .dot{background:rgba(255,255,255,0.7)}
+.dbadge{display:inline-flex;align-items:center;gap:6px;background:#f0f0f5;border-radius:8px;padding:7px 11px;font-size:13px;margin-bottom:14px}
+.btnadd{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:16px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer}
+.entry{display:flex;align-items:center;gap:10px;padding:12px;background:var(--card);border-radius:var(--rs);margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.edot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.ei{flex:1;min-width:0}
+.en{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.em{font-size:11px;color:var(--text2);margin-top:2px}
+.ea{font-size:14px;font-weight:700;flex-shrink:0}
+.edel{background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;line-height:1;padding:2px 4px}
+.ftag{font-size:10px;padding:1px 6px;border-radius:20px;background:#e8f5f1;color:#0b7a5a;margin-right:4px}
+.fi{display:flex;align-items:center;gap:10px;padding:12px;background:#f9f9fb;border-radius:var(--rs);margin-bottom:8px}
+.fib{font-size:10px;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.fib.fi-inc{background:#e1f5ee;color:#0F6E56}
+.fib.fi-exp{background:#faece7;color:#993C1D}
+.pc{width:200px;height:200px;margin:0 auto 16px}
+.lg{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}
+.li{display:flex;align-items:flex-start;gap:7px}
+.ld{width:10px;height:10px;border-radius:2px;flex-shrink:0;margin-top:2px}
+.lc{font-size:12px}.lv{font-size:11px;color:var(--text2)}
+.tw{height:200px;position:relative}
+.tleg{display:flex;gap:14px;margin-bottom:10px}
+.tli{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
+.tlsq{width:10px;height:10px;border-radius:2px}
+.empty{text-align:center;padding:32px 0;color:var(--text2);font-size:14px}
+.ib{background:#e8f5f1;border-radius:var(--rs);padding:10px 14px;font-size:12px;color:#0b7a5a;display:flex;align-items:center;gap:8px}
+.btnai{width:100%;padding:14px;background:linear-gradient(135deg,#1D9E75,#0F6E56);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btnai:disabled{opacity:0.6;cursor:not-allowed}
+.ald{display:flex;flex-direction:column;align-items:center;padding:32px 20px;gap:14px}
+.dots{display:flex;gap:6px}
+.dots span{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:bnc 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.2s}
+.dots span:nth-child(3){animation-delay:.4s}
+@keyframes bnc{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
+.aldt{font-size:13px;color:var(--text2)}
+.rsum{background:linear-gradient(135deg,#e8f5f1,#d1ede4);border-radius:var(--rs);padding:14px;margin-bottom:16px}
+.rsl{font-size:11px;color:#0b7a5a;margin-bottom:4px}
+.rsv{font-size:22px;font-weight:700;color:#0F6E56}
+.rss{font-size:11px;color:#1D9E75;margin-top:2px}
+.rstl{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.rsic{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.rsic.bg{background:#e8f5f1}.rsic.sg{background:#faece7}.rsic.ag{background:#e8f0fa}
+.bgrd{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.bi{background:#f9f9fb;border-radius:var(--rs);padding:10px 12px}
+.bic{font-size:11px;color:var(--text2);margin-bottom:3px;display:flex;align-items:center;gap:5px}
+.bid{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.biv{font-size:15px;font-weight:700}
+.bit{font-size:10px;margin-top:2px}
+.bit.up{color:var(--exp)}.bit.dn{color:var(--inc)}.bit.fl{color:var(--text3)}
+.sl{display:flex;flex-direction:column;gap:8px}
+.si2{background:#f9f9fb;border-radius:var(--rs);padding:12px;border-left:3px solid var(--exp)}
+.sih{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.sic{font-size:13px;font-weight:700}
+.sis{font-size:13px;font-weight:700;color:var(--inc)}
+.sid{font-size:12px;color:var(--text2);line-height:1.5}
+.al2{display:flex;flex-direction:column;gap:8px}
+.ai2{background:#f9f9fb;border-radius:var(--rs);padding:12px;display:flex;gap:10px;align-items:flex-start}
+.an{width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.at{font-size:12px;line-height:1.6;flex:1}
+.rerr{background:#faece7;border-radius:var(--rs);padding:14px;text-align:center;font-size:13px;color:#993C1D;line-height:1.6}
+.ovcom{font-size:13px;color:var(--text2);line-height:1.6;padding:0 2px}
+.anote{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5}
+.anote a{color:var(--accent)}
+#aksec{margin-top:12px;border-top:1px solid var(--border);padding-top:12px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hdr">
+    <div class="mnav">
+      <button class="nbtn" onclick="changeMonth(-1)">&#8249;</button>
+      <span class="mlbl" id="mlbl"></span>
+      <button class="nbtn" onclick="changeMonth(1)">&#8250;</button>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="ml">収入</div><div class="mv inc" id="ti">¥0</div></div>
+      <div class="metric"><div class="ml">支出</div><div class="mv exp" id="te">¥0</div></div>
+      <div class="metric"><div class="ml">残高</div><div class="mv" id="tb">¥0</div></div>
+    </div>
+  </div>
+  <div id="scroll">
+    <div id="tab-add">
+      <div class="card">
+        <div class="ct">新しい記録を追加</div>
+        <div class="ttog">
+          <button class="tbtn si" id="bi" onclick="setType('income')">↑ 収入</button>
+          <button class="tbtn" id="be" onclick="setType('expense')">↓ 支出</button>
+        </div>
+        <div style="margin-bottom:14px">
+          <div class="ch">
+            <button class="cn" onclick="calPrev()">&#8249;</button>
+            <span class="cml" id="cml"></span>
+            <button class="cn" onclick="calNext()">&#8250;</button>
+          </div>
+          <div class="cg" id="cdows"></div>
+          <div class="cg" id="cgrid" style="margin-top:2px"></div>
+        </div>
+        <div class="dbadge">📅 <span id="sdt">日付を選択してください</span></div>
+        <div class="fl">項目</div>
+        <div class="sw"><select id="nsel" onchange="onNS()"></select></div>
+        <div id="owrap" class="oi" style="display:none"><input type="text" id="noth" placeholder="項目名を入力" style="margin-top:6px"/></div>
+        <div class="fl">金額（円）</div>
+        <input type="number" id="amt" placeholder="例: 3,500" min="0" inputmode="numeric"/>
+        <div class="fl">メモ（任意）</div>
+        <input type="text" id="memo" placeholder="メモ"/>
+        <button class="btnadd" onclick="addEntry()" style="margin-top:12px">追加する</button>
+      </div>
+    </div>
+    <div id="tab-fixed" style="display:none">
+      <div class="card">
+        <div class="ct">固定費・固定収入を登録</div>
+        <div class="ttog">
+          <button class="tbtn si" id="fbi" onclick="setFType('income')">↑ 収入</button>
+          <button class="tbtn" id="fbe" onclick="setFType('expense')">↓ 支出</button>
+        </div>
+        <div class="fl">項目</div>
+        <div class="sw"><select id="fnsel" onchange="onFNS()"></select></div>
+        <div id="fowrap" class="oi" style="display:none"><input type="text" id="fnoth" placeholder="項目名を入力" style="margin-top:6px"/></div>
+        <div class="fr2" style="margin-top:12px">
+          <div><div class="fl" style="margin-top:0">金額（円）</div><input type="number" id="famt" placeholder="金額" min="0" inputmode="numeric"/></div>
+          <div><div class="fl" style="margin-top:0">引落日</div><div class="sw"><select id="fday"></select></div></div>
+        </div>
+        <button class="btnadd" onclick="addFixed()" style="margin-top:12px">登録する</button>
+      </div>
+      <div class="card"><div class="ct">登録済み一覧</div><div id="flist"></div></div>
+      <div class="ib">ℹ️ 固定費は毎月の明細に自動反映されます</div>
+    </div>
+    <div id="tab-list" style="display:none">
+      <div class="card"><div class="ct">今月の明細</div><div id="elist"></div></div>
+    </div>
+    <div id="tab-chart" style="display:none">
+      <div class="card">
+        <div class="ct">支出カテゴリ内訳</div>
+        <div class="pc"><canvas id="pch"></canvas></div>
+        <div class="lg" id="pleg"></div>
+      </div>
+      <div class="card">
+        <div class="ct">月別収支推移</div>
+        <div class="tleg">
+          <div class="tli"><div class="tlsq" style="background:#5DCAA5"></div>収入</div>
+          <div class="tli"><div class="tlsq" style="background:#F0997B"></div>支出</div>
+        </div>
+        <div class="tw"><canvas id="tch"></canvas></div>
+      </div>
+    </div>
+    <div id="tab-ai" style="display:none">
+      <div class="card">
+        <div class="ct">AIが家計を分析します</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">過去6ヶ月のデータをもとに予算提案と節約アドバイスを生成します。データが少ない場合は日本の平均的な家計を参考に補完します。</p>
+        <button class="btnai" id="btnai" onclick="generateReport()">✦ AIレポートを生成する</button>
+        <div id="aksec" style="display:none">
+          <div class="fl" style="margin-top:0">Anthropic APIキー</div>
+          <input type="password" id="akey" placeholder="sk-ant-..."/>
+          <div class="anote">ブラウザで直接開く場合はAPIキーが必要です。<br><a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a> で取得できます。</div>
+        </div>
+      </div>
+      <div id="aiarea"></div>
+    </div>
+  </div>
+  <nav id="nav">
+    <button class="ni active" onclick="switchTab('add')" id="nav-add">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>追加
+    </button>
+    <button class="ni" onclick="switchTab('fixed')" id="nav-fixed">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>固定費
+    </button>
+    <button class="ni" onclick="switchTab('list')" id="nav-list">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>明細
+    </button>
+    <button class="ni" onclick="switchTab('chart')" id="nav-chart">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>グラフ
+    </button>
+    <button class="ni" onclick="switchTab('ai')" id="nav-ai">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5V11h2a2 2 0 0 1 2 2v2h1a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h1v-2a2 2 0 0 1 2-2h2V9.5C8.8 8.8 8 7.5 8 6a4 4 0 0 1 4-4z"/></svg>AIレポート
+    </button>
+  </nav>
+</div>
+<script>
+const isCA=typeof window.claude!=='undefined'&&typeof window.claude.complete==='function';
+if(!isCA)document.getElementById('aksec').style.display='block';
+
+const INC=['給与','副業収入','ボーナス','投資配当','フリマ・売却','仕送り','その他収入'];
+const EXP=['食費','外食・カフェ','日用品','交通費','ガソリン代','住居費・家賃','水道代','電気代','ガス代','通信費・スマホ','インターネット','生命保険','医療・健康','衣服','靴','美容','理髪','教育','教材','習い事','本','映画・エンタメ','ゲーム','趣味','スポーツ','ペット','車・自転車','修理・メンテナンス','旅行','宿泊','家具','インテリア','日用雑貨','その他支出'];
+const CC={'食費':'#D85A30','外食・カフェ':'#BA7517','日用品':'#639922','交通費':'#378ADD','ガソリン代':'#185FA5','住居費・家賃':'#1D9E75','水道代':'#5DCAA5','電気代':'#E8C547','ガス代':'#ED8642','通信費・スマホ':'#4A90E2','インターネット':'#357ABD','生命保険':'#9013FE','医療・健康':'#F5A623','衣服':'#D0021B','靴':'#C41E3A','美容':'#FF69B4','理髪':'#FF1493','教育':'#1E90FF','教材':'#4169E1','習い事':'#6495ED','本':'#8B4513','映画・エンタメ':'#DC143C','ゲーム':'#FF6347','趣味':'#FFD700','スポーツ':'#32CD32','ペット':'#FF8C00','車・自転車':'#696969','修理・メンテナンス':'#808080','旅行':'#20B2AA','宿泊':'#48D1CC','家具':'#D2B48C','インテリア':'#DEB887','日用雑貨':'#F4A460'};
+
+let cType='income',fType='income',viewDate=new Date(),calDate=new Date(),selDate=null;
+let entries=[],fixedItems=[],pieChart=null,trendChart=null;
+try{entries=JSON.parse(localStorage.getItem('kakeibo')||'[]')}catch(e){}
+try{fixedItems=JSON.parse(localStorage.getItem('kfixed')||'[]')}catch(e){}
+
+function save(){try{localStorage.setItem('kakeibo',JSON.stringify(entries))}catch(e){}try{localStorage.setItem('kfixed',JSON.stringify(fixedItems))}catch(e){}}
+function fmt(n){return'¥'+Math.round(n).toLocaleString('ja-JP')}
+function mkey(d){const dt=new Date(d);return`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`}
+function isOth(v){return v==='その他収入'||v==='その他支出'}
+function bldOpts(id,items){document.getElementById(id).innerHTML=items.map(i=>`<option value="${i}">${i}</option>`).join('')}
+
+function setType(t){cType=t;document.getElementById('bi').className='tbtn'+(t==='income'?' si':'');document.getElementById('be').className='tbtn'+(t==='expense'?' se':'');bldOpts('nsel',t==='income'?INC:EXP);onNS()}
+function setFType(t){fType=t;document.getElementById('fbi').className='tbtn'+(t==='income'?' si':'');document.getElementById('fbe').className='tbtn'+(t==='expense'?' se':'');bldOpts('fnsel',t==='income'?INC:EXP);onFNS()}
+function onNS(){const v=document.getElementById('nsel').value;document.getElementById('owrap').style.display=isOth(v)?'block':'none'}
+function onFNS(){const v=document.getElementById('fnsel').value;document.getElementById('fowrap').style.display=isOth(v)?'block':'none'}
+function getN(){const v=document.getElementById('nsel').value;return isOth(v)?(document.getElementById('noth').value.trim()||'その他'):v}
+function getFN(){const v=document.getElementById('fnsel').value;return isOth(v)?(document.getElementById('fnoth').value.trim()||'その他'):v}
+
+function changeMonth(d){viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+d,1);calDate=new Date(viewDate);render();renderCal()}
+
+function buildDows(){document.getElementById('cdows').innerHTML=['日','月','火','水','木','金','土'].map(d=>`<div class="dow">${d}</div>`).join('')}
+function renderCal(){
+  const y=calDate.getFullYear(),m=calDate.getMonth();
+  document.getElementById('cml').textContent=`${y}年${m+1}月`;
+  const first=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate(),dipm=new Date(y,m,0).getDate();
+  const today=new Date(),mk=`${y}-${String(m+1).padStart(2,'0')}`;
+  const eDays=new Set(entries.filter(e=>mkey(e.date)===mk).map(e=>new Date(e.date).getDate()));
+  let h='';
+  for(let i=0;i<first;i++)h+=`<div class="cd om">${dipm-first+1+i}</div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const iT=today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===d;
+    const iS=selDate===ds,hE=eDays.has(d);
+    h+=`<button class="cd${iT?' tod':''}${iS?' sel':''}" onclick="selDay('${ds}')">${d}${hE?'<div class="dot"></div>':''}</button>`;
+  }
+  const rem=(7-((first+dim)%7))%7;
+  for(let d=1;d<=rem;d++)h+=`<div class="cd om">${d}</div>`;
+  document.getElementById('cgrid').innerHTML=h;
+}
+function calPrev(){calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);viewDate=new Date(calDate);render();renderCal()}
+function calNext(){calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);viewDate=new Date(calDate);render();renderCal()}
+function selDay(ds){
+  selDate=ds;
+  const d=new Date(ds);
+  document.getElementById('sdt').textContent=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}）`;
+  renderCal();
+}
+
+function addEntry(){
+  if(!selDate){alert('日付を選択してください');return}
+  const name=getN(),amount=parseFloat(document.getElementById('amt').value),memo=document.getElementById('memo').value.trim();
+  if(!amount||amount<=0){alert('金額を入力してください');return}
+  const category=document.getElementById('nsel').value;
+  entries.push({id:Date.now().toString(),type:cType,name,amount,category,date:selDate,memo});
+  save();document.getElementById('amt').value='';document.getElementById('memo').value='';document.getElementById('noth').value='';onNS();render();
+}
+function addFixed(){
+  const name=getFN(),amount=parseFloat(document.getElementById('famt').value),day=parseInt(document.getElementById('fday').value)||1,category=document.getElementById('fnsel').value;
+  if(!amount||amount<=0){alert('金額を入力してください');return}
+  fixedItems.push({id:Date.now().toString(),type:fType,name,amount,category,day});
+  save();document.getElementById('famt').value='';document.getElementById('fnoth').value='';onFNS();renderFList();render();
+}
+function delFixed(id){fixedItems=fixedItems.filter(f=>f.id!==id);save();renderFList();render()}
+function delEntry(id){entries=entries.filter(e=>e.id!==id);save();render()}
+
+function curEntries(targetDate){
+  const d=targetDate||viewDate;
+  const mk=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  const me=entries.filter(e=>mkey(e.date)===mk);
+  const fi=fixedItems.map(f=>{const day=f.day||1;const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(Math.min(day,28)).padStart(2,'0')}`;return{...f,date:ds,isFixed:true,id:'f_'+f.id+'_'+mk}});
+  return[...me,...fi];
+}
+
+function render(){
+  const y=viewDate.getFullYear(),m=viewDate.getMonth();
+  document.getElementById('mlbl').textContent=`${y}年${m+1}月`;
+  const mes=curEntries();
+  const inc=mes.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
+  const expv=mes.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
+  const bal=inc-expv;
+  document.getElementById('ti').textContent=fmt(inc);
+  document.getElementById('te').textContent=fmt(expv);
+  const bel=document.getElementById('tb');
+  bel.textContent=fmt(bal);bel.className='mv '+(bal>=0?'pos':'neg');
+  renderList(mes);renderFList();
+}
+
+function renderList(mes){
+  const el=document.getElementById('elist');
+  if(!mes.length){el.innerHTML='<div class="empty">記録がありません</div>';return}
+  const sorted=[...mes].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  el.innerHTML=sorted.map(e=>{
+    const color=CC[e.category]||'#888',sign=e.type==='income'?'+':'-',ac=e.type==='income'?'#1D9E75':'#D85A30';
+    const dt=new Date(e.date),ds=`${dt.getMonth()+1}/${dt.getDate()}`,ft=e.isFixed?'<span class="ftag">固定</span>':'';
+    return`<div class="entry"><div class="edot" style="background:${color}"></div><div class="ei"><div class="en">${ft}${e.name}</div><div class="em">${ds}${e.memo?' · '+e.memo:''}</div></div><div class="ea" style="color:${ac}">${sign}${fmt(e.amount)}</div>${!e.isFixed?`<button class="edel" onclick="delEntry('${e.id}')">×</button>`:'<div style="width:24px"></div>'}</div>`;
+  }).join('');
+}
+
+function renderFList(){
+  const el=document.getElementById('flist');
+  if(!fixedItems.length){el.innerHTML='<div class="empty">登録されていません</div>';return}
+  el.innerHTML=fixedItems.map(f=>{
+    const color=CC[f.category]||'#888',ac=f.type==='income'?'#1D9E75':'#D85A30',bc=f.type==='income'?'fi-inc':'fi-exp';
+    return`<div class="fi"><div class="edot" style="background:${color}"></div><div class="ei"><div class="en">${f.name}</div><div class="em">${f.category}${f.day?' · 毎月'+f.day+'日':''}</div></div><span class="fib ${bc}">${f.type==='income'?'収入':'支出'}</span><div class="ea" style="color:${ac}">${fmt(f.amount)}</div><button class="edel" onclick="delFixed('${f.id}')">×</button></div>`;
+  }).join('');
+}
+
+function renderCharts(){
+  const mes=curEntries(),bycat={};
+  mes.filter(e=>e.type==='expense').forEach(e=>{bycat[e.category]=(bycat[e.category]||0)+e.amount});
+  const sorted=Object.entries(bycat).sort((a,b)=>b[1]-a[1]),total=sorted.reduce((s,[,v])=>s+v,0);
+  if(pieChart)pieChart.destroy();
+  if(!sorted.length){document.getElementById('pleg').innerHTML='<div class="empty" style="grid-column:1/-1">支出データがありません</div>'}
+  else{
+    pieChart=new Chart(document.getElementById('pch'),{type:'doughnut',data:{labels:sorted.map(([k])=>k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:sorted.map(([k])=>CC[k]||'#888'),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:true,cutout:'58%',plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>` ${fmt(ctx.raw)} (${total?Math.round(ctx.raw/total*100):0}%)`}}}}});
+    document.getElementById('pleg').innerHTML=sorted.map(([cat,amt])=>`<div class="li"><div class="ld" style="background:${CC[cat]||'#888'}"></div><div><div class="lc">${cat}</div><div class="lv">${fmt(amt)} · ${total?Math.round(amt/total*100):0}%</div></div></div>`).join('');
+  }
+  const months=[];for(let i=5;i>=0;i--)months.push(new Date(viewDate.getFullYear(),viewDate.getMonth()-i,1));
+  const tl=months.map(d=>`${d.getMonth()+1}月`);
+  const incD=months.map(d=>curEntries(d).filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0));
+  const expD=months.map(d=>curEntries(d).filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0));
+  if(trendChart)trendChart.destroy();
+  trendChart=new Chart(document.getElementById('tch'),{type:'bar',data:{labels:tl,datasets:[{label:'収入',data:incD,backgroundColor:'#5DCAA580',borderColor:'#1D9E75',borderWidth:1.5},{label:'支出',data:expD,backgroundColor:'#F0997B80',borderColor:'#D85A30',borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>` ${fmt(ctx.raw)}`}}},scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#888'}},y:{ticks:{callback:v=>v>=10000?'¥'+Math.round(v/10000)+'万':'¥'+v.toLocaleString('ja-JP'),font:{size:10},color:'#888'},grid:{color:'rgba(0,0,0,0.05)'}}}}}); 
+}
+
+function buildPrompt(){
+  const now=new Date(),months=[];
+  for(let i=5;i>=0;i--)months.push(new Date(now.getFullYear(),now.getMonth()-i,1));
+  const monthStr=months.map(d=>{
+    const all=curEntries(d),inc=all.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0),expv=all.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0),bycat={};
+    all.filter(e=>e.type==='expense').forEach(e=>{bycat[e.category]=(bycat[e.category]||0)+e.amount});
+    const cats=Object.entries(bycat).map(([k,v])=>`  - ${k}: ${Math.round(v)}円`).join('\n');
+    return`【${d.getFullYear()}年${d.getMonth()+1}月】\n収入: ${Math.round(inc)}円\n支出: ${Math.round(expv)}円\n支出内訳:\n${cats||'  データなし'}`;
+  }).join('\n\n');
+  const fixedStr=fixedItems.length>0?fixedItems.map(f=>`- ${f.name}（${f.category}）: ${Math.round(f.amount)}円/月 [${f.type==='income'?'収入':'支出'}]`).join('\n'):'なし';
+  return`あなたは家計管理の専門家AIです。以下の家計データを分析し、日本語でJSONのみ返してください。他のテキスト不要。\n\n## 過去6ヶ月データ\n${monthStr}\n\n## 固定費・固定収入\n${fixedStr}\n\n## 出力JSON形式\n{"monthlySavingGoal":<整数>,"budgetRecommendations":[{"category":"名前","recommendedBudget":<整数>,"currentAvg":<整数>,"trend":"up"|"down"|"flat","color":"#hex"}],"savingOpportunities":[{"category":"名前","currentAmount":<整数>,"suggestedAmount":<整数>,"saving":<整数>,"description":"提案50文字以内"}],"advices":["40文字以内","40文字以内","40文字以内"],"overallComment":"80文字以内"}\n\nbudgetRecommendationsは上位5件、savingOpportunitiesは上位3件。データ不足なら日本平均の家計データで補完して必ず値を返す。`;
+}
+
+async function generateReport(){
+  const btn=document.getElementById('btnai'),area=document.getElementById('aiarea');
+  btn.disabled=true;
+  area.innerHTML='<div class="card"><div class="ald"><div class="dots"><span></span><span></span><span></span></div><div class="aldt">AIが家計データを分析中...</div></div></div>';
+  try{
+    const prompt=buildPrompt();let text;
+    if(isCA){
+      text=await window.claude.complete(prompt);
+    }else{
+      const apiKey=document.getElementById('akey').value.trim();
+      if(!apiKey){area.innerHTML='<div class="card"><div class="rerr">🔑 APIキーを入力してください。</div></div>';btn.disabled=false;return}
+      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+      if(res.status===401)throw new Error('auth');
+      if(!res.ok)throw new Error('api');
+      const data=await res.json();text=data.content.map(i=>i.text||'').join('');
+    }
+    let report;
+    try{const clean=text.replace(/```json|```/g,'').trim();report=JSON.parse(clean)}catch(e){throw new Error('parse')}
+    renderReport(report);
+  }catch(err){
+    const msg=err.message==='auth'?'🔑 APIキーが正しくありません。':err.message==='parse'?'⚠️ レポートの解析に失敗しました。再度お試しください。':'⚠️ レポートの生成に失敗しました。再度お試しください。';
+    area.innerHTML=`<div class="card"><div class="rerr">${msg}</div></div>`;
+  }
+  btn.disabled=false;
+}
+
+function renderReport(r){
+  const area=document.getElementById('aiarea');
+  const bHTML=(r.budgetRecommendations||[]).map(b=>{
+    const ti=b.trend==='up'?'↑ 増加傾向':b.trend==='down'?'↓ 減少傾向':'→ 安定',tc=b.trend==='up'?'up':b.trend==='down'?'dn':'fl';
+    return`<div class="bi"><div class="bic"><div class="bid" style="background:${b.color||CC[b.category]||'#888'}"></div>${b.category}</div><div class="biv">${fmt(b.recommendedBudget)}</div><div class="bit ${tc}">${ti}（現在平均 ${fmt(b.currentAvg)}）</div></div>`;
+  }).join('');
+  const sHTML=(r.savingOpportunities||[]).map(s=>`<div class="si2"><div class="sih"><div class="sic">${s.category}</div><div class="sis">月 ${fmt(s.saving)} 節約可能</div></div><div class="sid">${fmt(s.currentAmount)} → ${fmt(s.suggestedAmount)}｜${s.description}</div></div>`).join('');
+  const aHTML=(r.advices||[]).map((a,i)=>`<div class="ai2"><div class="an">${i+1}</div><div class="at">${a}</div></div>`).join('');
+  const ms=r.monthlySavingGoal||0;
+  area.innerHTML=`
+    <div class="card"><div class="rsum"><div class="rsl">✦ AI推奨・月間貯蓄目標</div><div class="rsv">${fmt(ms)}<span style="font-size:14px;font-weight:400"> / 月</span></div><div class="rss">年間で ${fmt(ms*12)} の貯蓄が見込めます</div></div><div class="ovcom">${r.overallComment||''}</div></div>
+    <div class="card"><div class="rstl"><div class="rsic bg">📊</div>来月の推奨予算</div><div class="bgrd">${bHTML||'<div class="empty" style="grid-column:1/-1">データ不足</div>'}</div></div>
+    <div class="card"><div class="rstl"><div class="rsic sg">✂️</div>ここを削れば貯金できる</div><div class="sl">${sHTML||'<div class="empty">改善項目なし</div>'}</div></div>
+    <div class="card" style="margin-bottom:0"><div class="rstl"><div class="rsic ag">💡</div>AIからのアドバイス</div><div class="al2">${aHTML||'<div class="empty">アドバイスなし</div>'}</div></div>`;
+}
+
+function switchTab(t){
+  ['add','fixed','list','chart','ai'].forEach(tab=>{document.getElementById('tab-'+tab).style.display=tab===t?'block':'none';document.getElementById('nav-'+tab).classList.toggle('active',tab===t)});
+  document.getElementById('scroll').scrollTop=0;
+  if(t==='chart')renderCharts();
+}
+
+document.getElementById('fday').innerHTML='<option value="">任意</option>'+Array.from({length:28},(_,i)=>`<option value="${i+1}">${i+1}日</option>`).join('');
+buildDows();
+selDay(new Date().toISOString().split('T')[0]);
+setType('income');setFType('income');
+render();
+</script>
+</body>
+</html>
