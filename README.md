@@ -5,7 +5,7 @@
 ## 🚀 今すぐ使う
 
 ### ウェブ版で開く
-https://syuuhei425.github.io/-shu/kakeibo5.html
+https://syuuhei425.github.io/-shu/kakeibo6.html
 
 ## 📱 スマートフォンのホーム画面に追加
 
